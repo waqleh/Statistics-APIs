@@ -1,6 +1,9 @@
 ###################################################
 # author: Walid Aqleh <waleedakleh23@hotmail.com> #
 ###################################################
+# project specific #
+###############################
+docker/database/data/
 
 # IDEs project files/settings #
 ###############################
