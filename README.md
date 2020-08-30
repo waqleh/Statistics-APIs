@@ -7,5 +7,6 @@ steps:
     $ cd docker
     $ docker-compose build
     $ docker-compose up
+    $ docker-compose run --rm php-fpm php bin/console doctrine:migrations:migrate
 
 url: http://localhost/
