@@ -18,7 +18,12 @@ class Review
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity=hotel::class, inversedBy="reviews")
+     * @ORM\Column(type="smallint")
+     */
+    private $hotel_id;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Hotel::class, inversedBy="reviews")
      * @ORM\JoinColumn(nullable=false)
      */
     private $hotel;

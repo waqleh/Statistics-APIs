@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Review;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -19,22 +20,24 @@ class ReviewRepository extends ServiceEntityRepository
         parent::__construct($registry, Review::class);
     }
 
-    // /**
-    //  * @return Review[] Returns an array of Review objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    /**
+     * @param int $hotelId
+     * @param string $dateFrom YYYY-MM-DD
+     * @param string $dateTo YYYY-MM-DD
+     * @return Review[] Returns an array of Review objects
+     */
+    public function findByHotelIdFromToField($hotelId, $dateFrom, $dateTo)
     {
         return $this->createQueryBuilder('r')
-            ->andWhere('r.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('r.id', 'ASC')
-            ->setMaxResults(10)
+            ->andWhere('r.hotel_id = :hotel_id')
+            ->andWhere('r.created_date BETWEEN :date_from AND :date_to')
+            ->setParameter('hotel_id', $hotelId)
+            ->setParameter('date_from', $dateFrom)
+            ->setParameter('date_to', $dateTo)
+            ->orderBy('r.created_date', 'ASC')
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
-    */
 
     /*
     public function findOneBySomeField($value): ?Review
