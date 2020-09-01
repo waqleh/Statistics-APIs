@@ -1,5 +1,6 @@
 # Statistics-APIs
 Coding challenge - Statistics APIs - hotel reviews
+
 API url: `http://localhost/api/getAvgScore/{hotelId}/{dateFrom}/{dateTo}`
 
 e.g: http://localhost/api/getAvgScore/1/2019-01-10/2020-02-01
@@ -7,26 +8,33 @@ e.g: http://localhost/api/getAvgScore/1/2019-01-10/2020-02-01
 ## Setup the development environment:
 
 ### Step 1 install docker and docker-compose:
+
 [how to install docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/):
 
 ### step 2 clone:
+
     $ git clone git@github.com:waqleh/Statistics-APIs.git
 
 ### step 3 build:
+
     $ cd {projectDir}/docker
     $ docker-compose build
 
 ### step 4 run:
+
     $ docker-compose up -d
 
 ### step 5 composer install:
+
     $ docker-compose exec php-fpm composer install
 
 ### step 6 dev env migration:
+
     $ docker-compose run --rm php-fpm php bin/console doctrine:migrations:migrate
     $ docker-compose run --rm php-fpm php bin/console doctrine:fixtures:load
 
 ### step 7 test env migration, to be able to run phpunit tests:
+
     $ docker-compose run --rm php-fpm php bin/console doctrine:migrations:migrate -etest
     $ docker-compose run --rm php-fpm php bin/console doctrine:fixtures:load -etest
 
@@ -55,6 +63,7 @@ test: `$ docker exec -it docker_test-database mysql test_hotels -uhotels_admin -
 ## This project was created as a coding challenge:
 
 ### Coding challenge - Statistics APIs
+
 Please use PHP 7.4, Symfony 5, Doctrine and an RDMS of your choice to create one service which provides a REST API endpoint as explained bellow.
  
 ### Todo
