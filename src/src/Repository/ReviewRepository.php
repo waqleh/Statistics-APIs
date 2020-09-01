@@ -26,7 +26,6 @@ class ReviewRepository extends ServiceEntityRepository
      * @param string $dateFrom YYYY-MM-DD
      * @param string $dateTo YYYY-MM-DD
      * @return Review[] Returns an array of Review objects
-     * @todo add cache
      */
     public function findByHotelIdAndCreatedDateFields($hotelId, $dateFrom, $dateTo)
     {
@@ -40,16 +39,4 @@ class ReviewRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
-
-    /*
-    public function findOneBySomeField($value): ?Review
-    {
-        return $this->createQueryBuilder('r')
-            ->andWhere('r.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }

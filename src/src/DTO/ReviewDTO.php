@@ -33,7 +33,7 @@ class ReviewDTO
     {
         $this->reviewCount = $reviewCount;
         $this->averageScore = $averageScore;
-        $this->dateGroup = $dateGroup; //@todo make this look better
+        $this->dateGroup = $dateGroup;
     }
 
     public function mapData(): array

@@ -14,27 +14,15 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class ApiController extends AbstractController
 {
-    //@TODO DELETE ME
-//    /**
-//     * @Route("/api", name="api")
-//     */
-//    public function index()
-//    {
-//        return $this->render('api/index.html.twig', [
-//            'controller_name' => 'ApiController',
-//        ]);
-//    }
 
     /**
+     * get hotel average score between dates
      * @Route("/api/getAvgScore/{hotelId}/{dateFrom}/{dateTo}", name="get_hotel_avg_score")
      * @param int $hotelId
      * @param string $dateFrom YYYY-MM-DD
      * @param string $dateTo YYYY-MM-DD
      * @param EntityManagerInterface $em
-     * @todo return date group
-     * @todo limit date from to to avoid crash
-     * @todo return http code
-     * @todo add phpdocs
+     * @return JsonResponse
      */
     public function getAvgScore($hotelId, $dateFrom, $dateTo, EntityManagerInterface $em)
     {
@@ -115,8 +103,6 @@ class ApiController extends AbstractController
      * @param $reviews
      * @param $range
      * @return array
-     * @todo try and make it with one loop by calculating sum in first loop then dividing by count
-     * @todo add cache
      */
     private function groupScore($reviews, $range)
     {
@@ -127,17 +113,6 @@ class ApiController extends AbstractController
         foreach ($reviews as $key => $review) {
             $currentKey = $review->getCreatedDate()->format($range);
             $reviewsGrouped[$currentKey][] = $review->getScore();
-//
-//            if ($key === array_key_last($reviews)){
-//
-//            }
-//            if(isset($previousKey)
-//                && $previousKey != $currentKey){
-//                // calculate Avg score of $previousKey
-//                //todo round the avg score
-//                $avgScore[$previousKey] = (array_sum($reviewsGrouped[$previousKey])/count($reviewsGrouped[$previousKey]));
-//            }
-//            $previousKey = $currentKey;
         }
 
         foreach ($reviewsGrouped as $currentKey => $reviews) {

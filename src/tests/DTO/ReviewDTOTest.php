@@ -15,7 +15,7 @@ class ReviewDTOTest extends TestCase
     {
         $reviewCount = 5;
         $averageScore = 3;
-        $dateGroup = "2019-01";//todo fix me
+        $dateGroup = "2019-01";
         $mappedData = (new ReviewDTO($reviewCount, $averageScore, $dateGroup))->mapData();
         $this->assertEquals([
             'review-count' => $reviewCount,
