@@ -7,6 +7,7 @@
 namespace App\Tests\Controller;
 
 use App\Entity\Hotel;
+use App\Entity\Review;
 use DateTime;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -65,6 +66,10 @@ class ApiControllerTest extends WebTestCase
         $hotelRepository = $this->entityManager
             ->getRepository(Hotel::class);
         $hotel = $hotelRepository->findOneBy([], null, $limit = 1);
+
+        // make sure that we have at least one review
+        $this->createReview($hotel);
+
         $hotelId = $hotel->getId();
         $dailyFromDate = (new DateTime(sprintf('-%d days', 29)))->format('Y-m-d');
         $toDate = (new DateTime('now'))->format('Y-m-d');
@@ -76,7 +81,16 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseHeaderSame('Content-Type', 'application/json');
         $this->assertStringContainsString('status', $client->getResponse()->getContent());
         $this->assertStringContainsString('success', $client->getResponse()->getContent());
-        $this->isJson();
+
+        $reviews = $hotel->getReviews()->filter(function($review) {
+            return $review->getCreatedDate() > (new DateTime(sprintf('-%d days', 29)))
+                && $review->getCreatedDate() < (new DateTime('now'));
+        });
+
+        foreach ($reviews as $review) {
+            $dateGroup = $review->getCreatedDate()->format('Y-m-d');
+            $this->assertStringContainsString('"date-group":"' . $dateGroup . '"', $client->getResponse()->getContent());
+        }
     }
 
     public function testGetHotelAvgReviewScoreGroupedWeekly()
@@ -84,6 +98,10 @@ class ApiControllerTest extends WebTestCase
         $hotelRepository = $this->entityManager
             ->getRepository(Hotel::class);
         $hotel = $hotelRepository->findOneBy([], null, $limit = 1);
+
+        // make sure that we have at least one review
+        $this->createReview($hotel);
+
         $hotelId = $hotel->getId();
         $dailyFromDate = (new DateTime(sprintf('-%d days', 89)))->format('Y-m-d');
         $toDate = (new DateTime('now'))->format('Y-m-d');
@@ -95,7 +113,16 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseHeaderSame('Content-Type', 'application/json');
         $this->assertStringContainsString('status', $client->getResponse()->getContent());
         $this->assertStringContainsString('success', $client->getResponse()->getContent());
-        $this->isJson();
+
+        $reviews = $hotel->getReviews()->filter(function($review) {
+            return $review->getCreatedDate() > (new DateTime(sprintf('-%d days', 89)))
+                && $review->getCreatedDate() < (new DateTime('now'));
+        });
+
+        foreach ($reviews as $review) {
+            $dateGroup = $review->getCreatedDate()->format('Y-m W');
+            $this->assertStringContainsString('"date-group":"'.$dateGroup.'"', $client->getResponse()->getContent());
+        }
     }
 
     public function testGetHotelAvgReviewScoreGroupedMonthly()
@@ -103,18 +130,13 @@ class ApiControllerTest extends WebTestCase
         $hotelRepository = $this->entityManager
             ->getRepository(Hotel::class);
         $hotel = $hotelRepository->findOneBy([], null, $limit = 1);
-        $hotelId = $hotel->getId();
 
+        // make sure that we have at least one review
+        $this->createReview($hotel);
+
+        $hotelId = $hotel->getId();
         $dailyFromDate = (new DateTime(sprintf('-%d days', 365)))->format('Y-m-d');
         $toDate = (new DateTime('now'))->format('Y-m-d');
-//        $dailyFromDate = (new DateTime(sprintf('+%d days', 365)))->format('Y-m-d');
-//        $toDate = (new DateTime(sprintf('+%d days', 400)))->format('Y-m-d');
-
-        $reviews = $hotel->getReviews()->filter(function($review) {
-            return $review->getCreatedDate() > (new DateTime(sprintf('-%d days', 365)))
-                && $review->getCreatedDate() < (new DateTime('now'));
-        });
-
 
         static::ensureKernelShutdown(); // creating factories boots the kernel; shutdown before creating the client
         $client = static::createClient();
@@ -123,7 +145,38 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseHeaderSame('Content-Type', 'application/json');
         $this->assertStringContainsString('status', $client->getResponse()->getContent());
         $this->assertStringContainsString('success', $client->getResponse()->getContent());
+
+        $reviews = $hotel->getReviews()->filter(function($review) {
+            return $review->getCreatedDate() > (new DateTime(sprintf('-%d days', 365)))
+                && $review->getCreatedDate() < (new DateTime('now'));
+        });
+
+        foreach ($reviews as $review) {
+            $dateGroup = $review->getCreatedDate()->format('Y-m');
+            $this->assertStringContainsString('"date-group":"'.$dateGroup.'"', $client->getResponse()->getContent());
+        }
     }
+
+    private function createReview($hotel)
+    {
+//        $reviewRepository = $this->entityManager
+//        ->getRepository(Review::class);
+//
+//        $reviewRepository->set
+        $review = new Review();
+        $score = 3;
+        $review->setScore($score);
+        $comment = "Want to sleep where Marilyn Monroe once lived? Dubbed the Pink Palace, the retro-luxe Beverly Hills Hotel on historic Sunset Boulevard has served as a meeting spot and makeshift home to a slew of movie stars like Monroe.";
+        $review->setComment($comment);
+//        $createdDate = new \DateTime('now');
+//        $review->setCreatedDate($createdDate);
+        $hotel->getReviews($review);
+
+        $this->entityManager->persist($hotel);
+
+        return $review;
+    }
+
 //
 //    /**
 //     * @dataProvider provideUrls
