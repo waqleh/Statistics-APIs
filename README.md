@@ -57,8 +57,10 @@ e.g: http://localhost/api/getAvgScore/1/2019-01-10/2020-02-01
 ## Access DB:
 
     $ cd {projectDir}/docker
-dev: `$ docker exec -it docker_database mysql wa_hotels -uhotels_admin -pdb-password`
-test: `$ docker exec -it docker_test-database mysql test_hotels -uhotels_admin -pdb-password`
+
+dev env: `$ docker exec -it docker_database mysql wa_hotels -uhotels_admin -pdb-password`
+
+test env: `$ docker exec -it docker_test-database mysql test_hotels -uhotels_admin -pdb-password`
 
 ## This project was created as a coding challenge:
 
