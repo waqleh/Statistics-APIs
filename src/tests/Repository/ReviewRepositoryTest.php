@@ -30,4 +30,32 @@ class ReviewRepositoryTest extends WebTestCase
             echo PHP_EOL.'--> hotelId:' . $review->getHotel()->getId() .' score:'. $review->getScore();
         }
     }
+
+    private function insertHotelAndReviews($dateFrom, $dateTo)
+    {
+        $hotel = new Hotel();
+        $hotel->setName("The Beverly Hills Hotel, Los Angeles");
+        $hotel->getReviews();
+
+        // Now, mock the repository so it returns the mock of the employee
+        $employeeRepository = $this->createMock(ObjectRepository::class);
+        // use getMock() on PHPUnit 5.3 or below
+        // $employeeRepository = $this->getMock(ObjectRepository::class);
+        $employeeRepository->expects($this->any())
+            ->method('find')
+            ->willReturn($hotel);
+
+        // Last, mock the EntityManager to return the mock of the repository
+        // (this is not needed if the class being tested injects the
+        // repository it uses instead of the entire object manager)
+        $objectManager = $this->createMock(ObjectManager::class);
+        // use getMock() on PHPUnit 5.3 or below
+        // $objectManager = $this->getMock(ObjectManager::class);
+        $objectManager->expects($this->any())
+            ->method('getRepository')
+            ->willReturn($employeeRepository);
+
+        $salaryCalculator = new SalaryCalculator($objectManager);
+        $this->assertEquals(2100, $salaryCalculator->calculateTotalSalary(1));
+    }
 }

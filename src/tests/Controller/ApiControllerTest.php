@@ -6,16 +6,9 @@
 
 namespace App\Tests\Controller;
 
-//use App\Entity\Hotel;
-//use App\Entity\Review;
-//use App\Factory\HotelFactory;
-//use App\Factory\ReviewFactory;
-//use App\Repository\HotelRepository;
 use App\Entity\Hotel;
-use App\Repository\HotelRepository;
+use DateTime;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-//use function Zenstruck\Foundry\create;
-//use function Zenstruck\Foundry\factory;
 
 class ApiControllerTest extends WebTestCase
 {
@@ -33,13 +26,48 @@ class ApiControllerTest extends WebTestCase
             ->getManager();
     }
 
-    public function testGetHotelAvgReviewScoreggggg()
+    public function testGetAvgScoreValidationError()
+    {
+        $hotelId = 'x';
+        $dailyFromDate = (new DateTime(sprintf('-%d days', 29)))->format('m-d-Y');
+        $toDate = (new DateTime('now'))->format('m-d-Y');
+
+        static::ensureKernelShutdown(); // creating factories boots the kernel; shutdown before creating the client
+        $client = static::createClient();
+        $client->request('GET', "/api/getAvgScore/$hotelId/$dailyFromDate/$toDate");
+        $this->assertResponseStatusCodeSame(200, $client->getResponse()->getStatusCode());
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+        $this->assertStringContainsString('status', $client->getResponse()->getContent());
+        $this->assertStringContainsString('fail', $client->getResponse()->getContent());
+        $this->assertStringContainsString(sprintf("Invalid hotel ID %s", $hotelId), $client->getResponse()->getContent());
+        $this->assertStringContainsString(sprintf("Invalid date from %s", $dailyFromDate), $client->getResponse()->getContent());
+        $this->assertStringContainsString(sprintf("Invalid date to %s", $toDate), $client->getResponse()->getContent());
+    }
+
+    public function testGetAvgScoreHotelValidationError()
+    {
+        $hotelId = 'x';
+        $dailyFromDate = (new DateTime(sprintf('-%d days', 29)))->format('Y-m-d');
+        $toDate = (new DateTime('now'))->format('Y-m-d');
+
+        static::ensureKernelShutdown(); // creating factories boots the kernel; shutdown before creating the client
+        $client = static::createClient();
+        $client->request('GET', "/api/getAvgScore/$hotelId/$dailyFromDate/$toDate");
+        $this->assertResponseStatusCodeSame(200, $client->getResponse()->getStatusCode());
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+        $this->assertStringContainsString('status', $client->getResponse()->getContent());
+        $this->assertStringContainsString('fail', $client->getResponse()->getContent());
+        $this->assertStringContainsString(sprintf("Invalid hotel ID %s", $hotelId), $client->getResponse()->getContent());
+    }
+
+    public function testGetHotelAvgReviewScoreGroupedDaily()
     {
         $hotelRepository = $this->entityManager
             ->getRepository(Hotel::class);
-        $hotelId = $hotelRepository->findOneBy([], null, $limit = 1)->getId();
-        $dailyFromDate = (new \DateTime(sprintf('-%d days', 365)))->format('Y-m-d');
-        $toDate = (new \DateTime('now'))->format('Y-m-d');
+        $hotel = $hotelRepository->findOneBy([], null, $limit = 1);
+        $hotelId = $hotel->getId();
+        $dailyFromDate = (new DateTime(sprintf('-%d days', 29)))->format('Y-m-d');
+        $toDate = (new DateTime('now'))->format('Y-m-d');
 
         static::ensureKernelShutdown(); // creating factories boots the kernel; shutdown before creating the client
         $client = static::createClient();
@@ -48,26 +76,73 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseHeaderSame('Content-Type', 'application/json');
         $this->assertStringContainsString('status', $client->getResponse()->getContent());
         $this->assertStringContainsString('success', $client->getResponse()->getContent());
-
-//        $this->assertJson($client->getResponse()->getContent(), 'asdasddsaasd');
+        $this->isJson();
     }
 
+    public function testGetHotelAvgReviewScoreGroupedWeekly()
+    {
+        $hotelRepository = $this->entityManager
+            ->getRepository(Hotel::class);
+        $hotel = $hotelRepository->findOneBy([], null, $limit = 1);
+        $hotelId = $hotel->getId();
+        $dailyFromDate = (new DateTime(sprintf('-%d days', 89)))->format('Y-m-d');
+        $toDate = (new DateTime('now'))->format('Y-m-d');
+
+        static::ensureKernelShutdown(); // creating factories boots the kernel; shutdown before creating the client
+        $client = static::createClient();
+        $client->request('GET', "/api/getAvgScore/$hotelId/$dailyFromDate/$toDate");
+        $this->assertResponseStatusCodeSame(200, $client->getResponse()->getStatusCode());
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+        $this->assertStringContainsString('status', $client->getResponse()->getContent());
+        $this->assertStringContainsString('success', $client->getResponse()->getContent());
+        $this->isJson();
+    }
+
+    public function testGetHotelAvgReviewScoreGroupedMonthly()
+    {
+        $hotelRepository = $this->entityManager
+            ->getRepository(Hotel::class);
+        $hotel = $hotelRepository->findOneBy([], null, $limit = 1);
+        $hotelId = $hotel->getId();
+
+        $dailyFromDate = (new DateTime(sprintf('-%d days', 365)))->format('Y-m-d');
+        $toDate = (new DateTime('now'))->format('Y-m-d');
+//        $dailyFromDate = (new DateTime(sprintf('+%d days', 365)))->format('Y-m-d');
+//        $toDate = (new DateTime(sprintf('+%d days', 400)))->format('Y-m-d');
+
+        $reviews = $hotel->getReviews()->filter(function($review) {
+            return $review->getCreatedDate() > (new DateTime(sprintf('-%d days', 365)))
+                && $review->getCreatedDate() < (new DateTime('now'));
+        });
+
+
+        static::ensureKernelShutdown(); // creating factories boots the kernel; shutdown before creating the client
+        $client = static::createClient();
+        $client->request('GET', "/api/getAvgScore/$hotelId/$dailyFromDate/$toDate");
+        $this->assertResponseStatusCodeSame(200, $client->getResponse()->getStatusCode());
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+        $this->assertStringContainsString('status', $client->getResponse()->getContent());
+        $this->assertStringContainsString('success', $client->getResponse()->getContent());
+    }
+//
 //    /**
 //     * @dataProvider provideUrls
 //     * @param string $url
 //     */
-//    public function testGetHotelAvgReviewScore($url)
+//    public function testGetHotelAvgReviewScoreMMMM($url)
 //    {
 //
 ////        $hotelRepository = static::$container->get(HotelRepository::class);
 ////        $hotels = $hotelRepository->findBy([], null, 1
 //
 //
+//        static::ensureKernelShutdown(); // creating factories boots the kernel; shutdown before creating the client
 //        $client = static::createClient();
 //        $client->request('GET', $url);
 //        $this->assertResponseStatusCodeSame(200, $client->getResponse()->getStatusCode());
 //        $this->assertResponseHeaderSame('Content-Type', 'application/json');
 //        $this->assertStringContainsString('status', $client->getResponse()->getContent());
+////        $this->assertStringContainsString('success', $client->getResponse()->getContent());
 //
 ////        $this->assertJson($client->getResponse()->getContent(), 'asdasddsaasd');
 //    }
@@ -94,10 +169,10 @@ class ApiControllerTest extends WebTestCase
 //     */
 //    private function fakeHotelReviews()
 //    {
-//
-//        $hotelRepository = static::$container->get(HotelRepository::class);
-//        $hotels = $hotelRepository->findOneBy([], null, $limit = 1);
-//        var_dump($hotels);
+////
+////        $hotelRepository = static::$container->get(HotelRepository::class);
+////        $hotels = $hotelRepository->findOneBy([], null, $limit = 1);
+////        var_dump($hotels);
 ////        echo '--->:'.var_dump($hotels[0]->getId());die;
 //
 ////        $numberOfHotelReviews = 100;
@@ -115,13 +190,13 @@ class ApiControllerTest extends WebTestCase
 ////        $hotel->setName($name);
 ////        $review->setHotel($hotel);
 //
-////        $numberOfHotelReviews = 100;
-////        // create random hotels
-////        $hotel = HotelFactory::new()->create();
-////        for ($i = 0; $i < $numberOfHotelReviews; $i++) {
-////            // create random hotel reviews
-////            ReviewFactory::new(['hotel' => $hotel])->create();
-////        }
-////        return $hotel->getId();
+//        $numberOfHotelReviews = 100;
+//        // create random hotels
+//        $hotel = HotelFactory::new()->create();
+//        for ($i = 0; $i < $numberOfHotelReviews; $i++) {
+//            // create random hotel reviews
+//            ReviewFactory::new(['hotel' => $hotel])->create();
+//        }
+//        return $hotel->getId();
 //    }
 }
