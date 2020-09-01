@@ -1,31 +1,56 @@
 # Statistics-APIs
 Coding challenge - Statistics APIs - hotel reviews
+API url: `http://localhost/api/getAvgScore/{hotelId}/{dateFrom}/{dateTo}`
 
-Setup the development environment:
-To setup the development environment you need to install docker and docker-compose ([how to install docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/)):
+e.g: http://localhost/api/getAvgScore/1/2019-01-10/2020-02-01
 
-Build docker project:
+## Setup the development environment:
 
-    $ cd docker
+### Step 1 install docker and docker-compose:
+[how to install docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/):
+
+### step 2 clone:
+    $ git clone git@github.com:waqleh/Statistics-APIs.git
+
+### step 3 build:
+    $ cd {projectDir}/docker
     $ docker-compose build
 
-Setup project:
-
-    $ git clone git@github.com:waqleh/Statistics-APIs.git
-    $ cd docker
+### step 4 run:
     $ docker-compose up -d
+
+### step 5 composer install:
+    $ docker-compose exec php-fpm composer install
+
+### step 6 dev env migration:
     $ docker-compose run --rm php-fpm php bin/console doctrine:migrations:migrate
     $ docker-compose run --rm php-fpm php bin/console doctrine:fixtures:load
 
-API url: `http://localhost/api/getAvgScore/{hotelId}/{dateFrom}/{dateTo}`
-
-Run tests:
-
-    $ cd docker
-    $ docker-compose up -d
+### step 7 test env migration, to be able to run phpunit tests:
     $ docker-compose run --rm php-fpm php bin/console doctrine:migrations:migrate -etest
     $ docker-compose run --rm php-fpm php bin/console doctrine:fixtures:load -etest
+
+## Starting Project:
+
+    $ cd {projectDir}/docker
+    $ docker-compose up
+
+## Stopping Project:
+
+    $ cd {projectDir}/docker
+    $ docker-compose down
+
+## Running tests, make sure that db is migrated and fixtures are ready:
+
+    $ cd {projectDir}/docker
+    $ docker-compose up -d
     $ docker-compose exec php-fpm composer test
+
+## Access DB:
+
+    $ cd {projectDir}/docker
+dev: `$ docker exec -it docker_database mysql wa_hotels -uhotels_admin -pdb-password`
+test: `$ docker exec -it docker_test-database mysql test_hotels -uhotels_admin -pdb-password`
 
 ## This project was created as a coding challenge:
 
@@ -33,7 +58,7 @@ Run tests:
 Please use PHP 7.4, Symfony 5, Doctrine and an RDMS of your choice to create one service which provides a REST API endpoint as explained bellow.
  
 ### Todo
-- Create these two tables: 
+- Create these two tables:
     1) `hotel`(`id`, `name`)
     2) `review`(`id`, `hotel_id`, `score`, `comment`, `created_date`)
 - Fill the `hotel` table with 10 rows with random names
