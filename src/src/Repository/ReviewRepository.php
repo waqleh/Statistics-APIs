@@ -21,12 +21,14 @@ class ReviewRepository extends ServiceEntityRepository
     }
 
     /**
+     * get reviews between two dates and hotel id
      * @param int $hotelId
      * @param string $dateFrom YYYY-MM-DD
      * @param string $dateTo YYYY-MM-DD
      * @return Review[] Returns an array of Review objects
+     * @todo add cache
      */
-    public function findByHotelIdFromToField($hotelId, $dateFrom, $dateTo)
+    public function findByHotelIdAndCreatedDateFields($hotelId, $dateFrom, $dateTo)
     {
         return $this->createQueryBuilder('r')
             ->andWhere('r.hotel_id = :hotel_id')

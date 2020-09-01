@@ -21,7 +21,7 @@ services:
     depends_on:
       - database
     environment:
-      - APP_ENV=${APP_ENV}
+#      - APP_ENV=${APP_ENV} #https://stackoverflow.com/questions/45922358/why-phpunit-is-not-getting-the-correct-app-env-as-specified-in-phpunit-xml
       - APP_SECRET=${APP_SECRET}
 #      - DATABASE_URL=mysql://${DATABASE_USER}:${DATABASE_PASSWORD}@database:3306/${DATABASE_NAME}?serverVersion=5.7
       - DATABASE_URL=mysql://${DATABASE_USER}:${DATABASE_PASSWORD}@database:3306/${DATABASE_NAME}?serverVersion=mariadb-10.5.5

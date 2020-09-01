@@ -2,9 +2,14 @@
 
 namespace App\Controller;
 
+use App\DTO\ReviewDTO;
+use App\Entity\Hotel;
 use App\Entity\Review;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
 class ApiController extends AbstractController
@@ -25,72 +30,99 @@ class ApiController extends AbstractController
      * @param string $dateFrom YYYY-MM-DD
      * @param string $dateTo YYYY-MM-DD
      * @param EntityManagerInterface $em
-     * @todo add validation
-     * @todo identify number of days between dates
+     * @todo return date group
+     * @todo limit date from to to avoid crash
+     * @todo return http code
+     * @todo add phpdocs
      */
-    public function getAvgScore($hotelId, $dateFrom, $dateTo, EntityManagerInterface $em){
-        //todo add validation
+    public function getAvgScore($hotelId, $dateFrom, $dateTo, EntityManagerInterface $em)
+    {
+        try {
+            $validation = $this->validate($hotelId, $dateFrom, $dateTo);
+            if (empty($validation)) {
+                $reviewRepository = $em->getRepository(Review::class);
+                /** @var Review $reviews */
+                $reviews = $reviewRepository->findByHotelIdAndCreatedDateFields($hotelId, $dateFrom, $dateTo);
 
-        $reviewRepository = $em->getRepository(Review::class);
-        //todo identify number of days between dates
-        /** @var Review $reviews */
-        $reviews = $reviewRepository->findByHotelIdFromToField($hotelId, $dateFrom, $dateTo);
-//        if (!$reviews) {
-//            //@TODO return 0 result
-//            throw $this->createNotFoundException(sprintf('No hotel with id "%s"', $hotelId));
-//        }
+                $avgScores = null;
+                $earlier = new DateTime($dateFrom);
+                $later = new DateTime($dateTo);
 
+                $days = (int)$later->diff($earlier)->days;
 
-        $avgScore = null;
-        $earlier = new \DateTime($dateFrom);
-        $later = new \DateTime($dateTo);
-
-        $days = (int) $later->diff($earlier)->days;
-
-        if ($days < 30) {
-            //1 - 29 days: Grouped daily
-            $avgScore = $this->getAvgScoreOfEachDay($reviews);
-            echo 'daily';
-        } else if ($days < 90) {
-            //30 - 89 days: Grouped weekly
-            $avgScore = $this->getAvgScoreOfEachWeek($reviews);
-            echo 'weekly';
-        } else {
-            //More than 89 days: Grouped monthly
-            $avgScore = $this->getAvgScoreOfEachMonth($reviews);
-            echo 'monthly';
+                if ($days < 30) {
+                    //1 - 29 days: Grouped daily
+                    $score = $this->groupScoreOfEachDay($reviews);
+                } else if ($days < 90) {
+                    //30 - 89 days: Grouped weekly
+                    $score = $this->groupScoreOfEachWeek($reviews);
+                } else {
+                    //More than 89 days: Grouped monthly
+                    $score = $this->groupScoreOfEachMonth($reviews);
+                }
+                $response = [
+                    'status' => 'success',
+                    'data' => $score,
+                ];
+            } else {
+                $response = [
+                    'status' => 'fail',
+                    'data' => $validation,
+                ];
+            }
+        } catch (Exception $e) {
+            $response = [
+                'status' => 'error',
+                'message' => 'Something went wrong, contact system administrator',
+            ];
         }
-
-        dump([$hotelId, $dateFrom, $dateTo, $days, $avgScore]);
-        die('<br>getAvgScore');
-    }
-
-    private function getAvgScoreOfEachDay($reviews)
-    {
-        return $this->calculateAvgScore($reviews, "Y-m-d");
-    }
-
-    private function getAvgScoreOfEachWeek($reviews)
-    {
-        return $this->calculateAvgScore($reviews, "Y-m W");
-    }
-
-    private function getAvgScoreOfEachMonth($reviews)
-    {
-        return $this->calculateAvgScore($reviews, "Y-m");
+        return new JsonResponse($response);
     }
 
     /**
+     * Grouped daily scores
+     * @param $reviews
+     * @return array
+     */
+    private function groupScoreOfEachDay($reviews)
+    {
+        return $this->groupScore($reviews, "Y-m-d");
+    }
+
+    /**
+     * Grouped weekly scores
+     * @param $reviews
+     * @return array
+     */
+    private function groupScoreOfEachWeek($reviews)
+    {
+        return $this->groupScore($reviews, "Y-m W");
+    }
+
+    /**
+     * Grouped monthly scores
+     * @param $reviews
+     * @return array
+     */
+    private function groupScoreOfEachMonth($reviews)
+    {
+        return $this->groupScore($reviews, "Y-m");
+    }
+
+    /**
+     * group hotel review scores
      * @param $reviews
      * @param $range
      * @return array
-     * @todo try and make it with one loop by calculating sum in first loop then deviding by count
+     * @todo try and make it with one loop by calculating sum in first loop then dividing by count
      * @todo add cache
      */
-    private function calculateAvgScore($reviews, $range)
+    private function groupScore($reviews, $range)
     {
         $reviewsGrouped = [];
         $avgScores = [];
+        $avgScoresCount = [];
+        $response = [];
         foreach ($reviews as $key => $review) {
             $currentKey = $review->getCreatedDate()->format($range);
             $reviewsGrouped[$currentKey][] = $review->getScore();
@@ -106,11 +138,59 @@ class ApiController extends AbstractController
 //            }
 //            $previousKey = $currentKey;
         }
-        dump([$reviews, $reviewsGrouped]);
 
         foreach ($reviewsGrouped as $currentKey => $reviews) {
-            $avgScores[$currentKey] = array_sum($reviews) / count($reviews);
+            $count = count($reviews);
+            $avgScores[$currentKey] = array_sum($reviews) / $count;
+            $avgScoresCount[$currentKey] = $count;
         }
-        return $avgScores;
+
+        foreach ($avgScores as $currentKey => $avgScore) {
+            $response[] = (new ReviewDTO($avgScoresCount[$currentKey], $avgScore, $currentKey))->mapData();
+        }
+        return $response;
+    }
+
+    /**
+     * validate the user input
+     * @param int $hotelId
+     * @param string $dateFrom
+     * @param string $dateTo
+     * @return array
+     */
+    private function validate($hotelId, $dateFrom, $dateTo)
+    {
+        $errorMessages = [];
+        $format = 'Y-m-d';
+
+        $hotel = $this->getDoctrine()
+            ->getRepository(Hotel::class)
+            ->find($hotelId);
+        if(is_null($hotel)){
+            $errorMessages[] = "Invalid hotel ID $hotelId";
+        }
+        if(!$this->validateDate($dateFrom)){
+            $errorMessages[] = "Invalid date from $dateFrom, expected format: $format";
+        }
+        if(!$this->validateDate($dateTo)){
+            $errorMessages[] = "Invalid date to $dateTo, expected format: $format";
+        }
+        if($dateFrom >= $dateTo){
+            $errorMessages[] = "Invalid date range, from ($dateFrom) should be before to ($dateTo)";
+        }
+
+        return $errorMessages;
+    }
+
+    /**
+     * make sure the date is in the correct format
+     * @param string $date
+     * @param string $format
+     * @return bool
+     */
+    private function validateDate($date, $format = 'Y-m-d')
+    {
+        $d = DateTime::createFromFormat($format, $date);
+        return $d && $d->format($format) === $date;
     }
 }
