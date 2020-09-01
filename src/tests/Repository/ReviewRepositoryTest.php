@@ -6,6 +6,7 @@
 
 namespace App\Tests\Repository;
 
+use App\Entity\Hotel;
 use App\Entity\Review;
 use App\Repository\HotelRepository;
 use App\Repository\ReviewRepository;
@@ -19,10 +20,9 @@ class ReviewRepositoryTest extends WebTestCase
         static::createClient();
         $hotelRepository = static::$container->get(HotelRepository::class);
         $hotels = $hotelRepository->findAll();
-        echo '---> '; var_dump($hotels[0]->getId());
-        $hotelId = $hotels[0]->getId();
         $dateFrom = '2019-01-18';
         $dateTo = '2020-01-18';
+        $hotelId = $this->insertHotelAndReviews($dateFrom, $dateTo);
         $reviewRepository = static::$container->get(ReviewRepository::class);
         $reviews = $reviewRepository->findByHotelIdAndCreatedDateFields($hotelId, $dateFrom, $dateTo);
 
