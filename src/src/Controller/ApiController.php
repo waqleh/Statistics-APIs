@@ -14,15 +14,16 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class ApiController extends AbstractController
 {
-    /**
-     * @Route("/api", name="api")
-     */
-    public function index()
-    {
-        return $this->render('api/index.html.twig', [
-            'controller_name' => 'ApiController',
-        ]);
-    }
+    //@TODO DELETE ME
+//    /**
+//     * @Route("/api", name="api")
+//     */
+//    public function index()
+//    {
+//        return $this->render('api/index.html.twig', [
+//            'controller_name' => 'ApiController',
+//        ]);
+//    }
 
     /**
      * @Route("/api/getAvgScore/{hotelId}/{dateFrom}/{dateTo}", name="get_hotel_avg_score")

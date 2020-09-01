@@ -19,6 +19,7 @@ class HotelRepository extends ServiceEntityRepository
         parent::__construct($registry, Hotel::class);
     }
 
+    //@TODO DELETE ME
     // /**
     //  * @return Hotel[] Returns an array of Hotel objects
     //  */
@@ -36,6 +37,7 @@ class HotelRepository extends ServiceEntityRepository
     }
     */
 
+    //@TODO DELETE ME
     /*
     public function findOneBySomeField($value): ?Hotel
     {

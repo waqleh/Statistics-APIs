@@ -4,6 +4,7 @@
 # project specific #
 ###############################
 docker/database/data/
+docker/database/testData/
 
 # IDEs project files/settings #
 ###############################
