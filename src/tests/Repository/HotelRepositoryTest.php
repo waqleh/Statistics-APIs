@@ -13,7 +13,7 @@ class HotelRepositoryTest extends WebTestCase
 {
     public function testGettingHotelReviews()
     {
-        //todo finish this test
+        //@todo finish this test
         static::createClient();
         $hotelRepository = static::$container->get(HotelRepository::class);
         $hotels = $hotelRepository->findAll();
